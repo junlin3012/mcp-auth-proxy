@@ -143,15 +143,16 @@ func (a *IDPRouter) handleAuthorizationReturn(c *gin.Context) {
 	for _, scope := range ar.GetRequestedScopes() {
 		ar.GrantScope(scope)
 	}
-	// Extract authenticated user's email from session for JWT sub claim.
-	// This enables identity forwarding to upstream (ContextForge).
+	// Extract authenticated user's email from cookie session for JWT sub claim.
+	// Store in authorize request Form so it survives DB serialization (Session doesn't).
 	subject := "user"
-	session := sessions.Default(c)
-	if email := session.Get(auth.SessionKeyUserEmail); email != nil {
+	browserSession := sessions.Default(c)
+	if email := browserSession.Get(auth.SessionKeyUserEmail); email != nil {
 		if emailStr, ok := email.(string); ok && emailStr != "" {
 			subject = emailStr
 		}
 	}
+	ar.GetRequestForm().Set("identity_subject", subject)
 	jwtSession, err := NewJWTSessionWithKey(a.externalURL, subject, a.privKey)
 	if err != nil {
 		a.logger.With(utils.Err(err)...).Error("Failed to create JWT session", zap.Error(err))
@@ -186,14 +187,13 @@ func (a *IDPRouter) handleToken(c *gin.Context) {
 		return
 	}
 
-	// Inject sub claim from stored session's DefaultSession.Subject.
-	// fosite preserves DefaultSession.Subject across serialization, but
-	// JWTClaims.Subject is lost. fosite's ToMap() deletes "sub" from Extra
-	// when JWTClaims.Subject is empty (claims_jwt.go:88). Fix: set BOTH.
-	if sess, ok := accessRequest.GetSession().(*Session); ok {
-		subj := sess.GetSubject()
-		if subj != "" && sess.JWTClaims != nil {
+	// Recover user identity from the stored authorize request's Form.
+	// Session data is NOT serialized to DB (models.Request has no Session field).
+	// Form values ARE serialized. We stored identity_subject during authorization.
+	if sess, ok := accessRequest.GetSession().(*Session); ok && sess.JWTClaims != nil {
+		if subj := accessRequest.GetRequestForm().Get("identity_subject"); subj != "" {
 			sess.JWTClaims.Subject = subj
+			sess.DefaultSession.Subject = subj
 		}
 	}
 
