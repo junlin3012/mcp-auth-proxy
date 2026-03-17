@@ -186,16 +186,14 @@ func (a *IDPRouter) handleToken(c *gin.Context) {
 		return
 	}
 
-	// Inject sub claim from stored session's Subject into JWT Extra claims.
-	// fosite restores DefaultSession.Subject from the auth code session, but
-	// JWTClaims.Extra doesn't survive serialization. We read Subject and inject it.
+	// Inject sub claim from stored session's DefaultSession.Subject.
+	// fosite preserves DefaultSession.Subject across serialization, but
+	// JWTClaims.Subject is lost. fosite's ToMap() deletes "sub" from Extra
+	// when JWTClaims.Subject is empty (claims_jwt.go:88). Fix: set BOTH.
 	if sess, ok := accessRequest.GetSession().(*Session); ok {
 		subj := sess.GetSubject()
 		if subj != "" && sess.JWTClaims != nil {
-			if sess.JWTClaims.Extra == nil {
-				sess.JWTClaims.Extra = make(map[string]any)
-			}
-			sess.JWTClaims.Extra["sub"] = subj
+			sess.JWTClaims.Subject = subj
 		}
 	}
 
