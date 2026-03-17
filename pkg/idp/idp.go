@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/ory/fosite"
 	"github.com/ory/fosite/compose"
@@ -142,7 +143,16 @@ func (a *IDPRouter) handleAuthorizationReturn(c *gin.Context) {
 	for _, scope := range ar.GetRequestedScopes() {
 		ar.GrantScope(scope)
 	}
-	jwtSession, err := NewJWTSessionWithKey(a.externalURL, "user", a.privKey)
+	// Extract authenticated user's email from session for JWT sub claim.
+	// This enables identity forwarding to upstream (ContextForge).
+	subject := "user"
+	session := sessions.Default(c)
+	if email := session.Get(auth.SessionKeyUserEmail); email != nil {
+		if emailStr, ok := email.(string); ok && emailStr != "" {
+			subject = emailStr
+		}
+	}
+	jwtSession, err := NewJWTSessionWithKey(a.externalURL, subject, a.privKey)
 	if err != nil {
 		a.logger.With(utils.Err(err)...).Error("Failed to create JWT session", zap.Error(err))
 		a.provider.WriteAuthorizeError(ctx, c.Writer, ar, err)
