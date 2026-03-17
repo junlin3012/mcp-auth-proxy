@@ -3,33 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - MCP Auth Proxy</title>
+    <title>Login - Fluid Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Proza+Libre:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
       body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        font-family: "Proza Libre", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #FFFBF7;
         margin: 0;
         padding: 0;
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
+        color: #2E2725;
       }
       .login-container {
-        background: white;
+        background: #F6F1EB;
         padding: 2.5rem;
         border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        border: 1.5px solid #E5DCD2;
+        box-shadow: 0 8px 32px rgba(64, 20, 16, 0.08);
         text-align: center;
         min-width: 350px;
         max-width: 400px;
         width: 100%;
       }
+      .logo-text {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #78401F;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+      }
       h1 {
-        color: #333;
+        color: #401410;
         margin-bottom: 2rem;
-        font-size: 2rem;
-        font-weight: 600;
+        margin-top: 0.25rem;
+        font-size: 1.75rem;
+        font-weight: 700;
       }
       .form-group {
         margin-bottom: 1.5rem;
@@ -38,46 +52,51 @@
       .form-label {
         display: block;
         margin-bottom: 0.5rem;
-        color: #555;
+        color: #5E281F;
         font-weight: 500;
         font-size: 0.9rem;
       }
       .form-input {
         width: 100%;
         padding: 12px 16px;
-        border: 2px solid #e1e5e9;
+        border: 1.5px solid #E5DCD2;
         border-radius: 8px;
         font-size: 16px;
+        font-family: inherit;
+        background: #FFFBF7;
+        color: #2E2725;
         transition: border-color 0.2s, box-shadow 0.2s;
         box-sizing: border-box;
       }
       .form-input:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: #78401F;
+        box-shadow: 0 0 0 3px rgba(120, 64, 31, 0.1);
       }
       .password-button {
         width: 100%;
         padding: 12px 20px;
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        color: white;
+        background: #78401F;
+        color: #FFFBF7;
         border: none;
         border-radius: 8px;
         font-size: 16px;
         font-weight: 600;
+        font-family: inherit;
         cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
         box-sizing: border-box;
       }
       .password-button:hover {
+        background: #5E281F;
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 6px 20px rgba(94, 40, 31, 0.25);
       }
       .divider {
         margin: 1.5rem 0;
         position: relative;
-        color: #999;
-        font-size: 0.9rem;
+        color: #9E9489;
+        font-size: 0.85rem;
       }
       .divider::before {
         content: "";
@@ -86,11 +105,11 @@
         left: 0;
         right: 0;
         height: 1px;
-        background: #e5e5e5;
+        background: #E5DCD2;
         z-index: 1;
       }
       .divider span {
-        background: white;
+        background: #F6F1EB;
         padding: 0 1rem;
         position: relative;
         z-index: 2;
@@ -104,6 +123,7 @@
         border-radius: 8px;
         font-size: 16px;
         font-weight: 500;
+        font-family: inherit;
         transition: transform 0.2s, box-shadow 0.2s;
         border: none;
         cursor: pointer;
@@ -115,31 +135,31 @@
       }
       .provider-button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
       }
       .google {
-        background-color: #4285f4;
-        color: white;
+        background-color: #083E43;
+        color: #FFFBF7;
       }
       .google:hover {
-        background-color: #357ae8;
+        background-color: #0A2730;
       }
       .github {
-        background-color: #333;
-        color: white;
+        background-color: #2E2725;
+        color: #FFFBF7;
       }
       .github:hover {
-        background-color: #24292e;
+        background-color: #401410;
       }
       .oidc {
-        background-color: #5c67f2;
-        color: white;
+        background-color: #083E43;
+        color: #FFFBF7;
       }
       .oidc:hover {
-        background-color: #4e54d4;
+        background-color: #0A2730;
       }
       .error-message {
-        color: #e74c3c;
+        color: #a03020;
         font-size: 0.9rem;
         margin-top: 0.5rem;
         text-align: center;
@@ -148,7 +168,8 @@
   </head>
   <body>
     <div class="login-container">
-      <h1>MCP Auth Proxy</h1>
+      <div class="logo-text">Fluid Intelligence</div>
+      <h1>Sign In</h1>
 
       {{if .HasPassword}}
       <form class="password-form" action="/.auth/login" method="POST">
