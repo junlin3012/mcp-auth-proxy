@@ -56,6 +56,10 @@ func (p *ProxyRouter) handleProtectedResource(c *gin.Context) {
 }
 
 func (p *ProxyRouter) handleProxy(c *gin.Context) {
+	// Defense-in-depth: strip identity header from incoming requests to prevent spoofing.
+	// Only auth-proxy should set this header, never external clients.
+	c.Request.Header.Del("X-Authenticated-User")
+
 	authHeader := c.Request.Header.Get("Authorization")
 	if !strings.HasPrefix(authHeader, "Bearer ") {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -73,6 +77,16 @@ func (p *ProxyRouter) handleProxy(c *gin.Context) {
 	if err != nil || !token.Valid {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 		return
+	}
+
+	// Extract user identity from validated JWT and forward to upstream.
+	// ContextForge consumes this via TRUST_PROXY_AUTH + PROXY_USER_HEADER.
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		if sub, ok := claims["sub"].(string); ok && sub != "" {
+			c.Request.Header.Set("X-Authenticated-User", sub)
+		} else if clientID, ok := claims["client_id"].(string); ok && clientID != "" {
+			c.Request.Header.Set("X-Authenticated-User", clientID)
+		}
 	}
 
 	if p.httpStreamingOnly && isSSEGetRequest(c.Request) {
