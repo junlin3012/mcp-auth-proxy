@@ -96,6 +96,10 @@ func (p *ProxyRouter) handleProxy(c *gin.Context) {
 
 	c.Request.Header.Del("Authorization")
 	for key, values := range p.proxyHeaders {
+		// Never allow static proxy-headers to override the validated identity header.
+		if strings.EqualFold(key, "X-Authenticated-User") {
+			continue
+		}
 		for _, value := range values {
 			c.Request.Header.Add(key, value)
 		}
