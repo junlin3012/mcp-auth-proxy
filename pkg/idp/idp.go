@@ -186,6 +186,19 @@ func (a *IDPRouter) handleToken(c *gin.Context) {
 		return
 	}
 
+	// Inject sub claim from stored session's Subject into JWT Extra claims.
+	// fosite restores DefaultSession.Subject from the auth code session, but
+	// JWTClaims.Extra doesn't survive serialization. We read Subject and inject it.
+	if sess, ok := accessRequest.GetSession().(*Session); ok {
+		subj := sess.GetSubject()
+		if subj != "" && sess.JWTClaims != nil {
+			if sess.JWTClaims.Extra == nil {
+				sess.JWTClaims.Extra = make(map[string]any)
+			}
+			sess.JWTClaims.Extra["sub"] = subj
+		}
+	}
+
 	response, err := a.provider.NewAccessResponse(ctx, accessRequest)
 	if err != nil {
 		a.logger.With(utils.Err(err)...).Error("Failed to create access response", zap.String("grant_type", c.PostForm("grant_type")), zap.Error(err))
