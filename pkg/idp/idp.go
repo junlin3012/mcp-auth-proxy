@@ -416,9 +416,12 @@ func NewJWTSessionWithKey(iss string, subject string, privateKey *rsa.PrivateKey
 			Issuer:    iss,
 			Subject:   subject,
 			Audience:  []string{},
-			ExpiresAt: time.Now().Add(time.Hour),
+			ExpiresAt: time.Now().Add(time.Hour * 24),
 			IssuedAt:  time.Now(),
 			NotBefore: time.Now(),
+			Extra: map[string]any{
+				"sub": subject,
+			},
 		},
 		JWTHeader: &jwt.Headers{
 			Extra: map[string]any{
