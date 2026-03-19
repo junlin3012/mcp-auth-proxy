@@ -47,13 +47,13 @@ func NewIDPRouter(
 	}
 	config := &fosite.Config{
 		GlobalSecret:                   secret,
-		AccessTokenLifespan:            24 * time.Hour,
-		RefreshTokenLifespan:           30 * 24 * time.Hour,
+		AccessTokenLifespan:            1 * time.Hour,
+		RefreshTokenLifespan:           7 * 24 * time.Hour,
 		RefreshTokenScopes:             []string{},
 		AccessTokenIssuer:              externalURL,
 		EnforcePKCE:                    false,
-		EnforcePKCEForPublicClients:    false,
-		EnablePKCEPlainChallengeMethod: true,
+		EnforcePKCEForPublicClients:    true,
+		EnablePKCEPlainChallengeMethod: false,
 		ScopeStrategy:                  fosite.HierarchicScopeStrategy,
 		MinParameterEntropy:            fosite.MinParameterEntropy,
 		ClientSecretsHasher:            hasher,
@@ -426,8 +426,8 @@ func NewJWTSessionWithKey(iss string, subject string, privateKey *rsa.PrivateKey
 		JWTClaims: &jwt.JWTClaims{
 			Issuer:    iss,
 			Subject:   subject,
-			Audience:  []string{},
-			ExpiresAt: time.Now().Add(time.Hour * 24),
+			Audience:  []string{iss},
+			ExpiresAt: time.Now().Add(1 * time.Hour),
 			IssuedAt:  time.Now(),
 			NotBefore: time.Now(),
 			Extra: map[string]any{

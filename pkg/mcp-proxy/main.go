@@ -23,7 +23,9 @@ import (
 	"github.com/sigbit/mcp-auth-proxy/pkg/backend"
 	"github.com/sigbit/mcp-auth-proxy/pkg/idp"
 	"github.com/sigbit/mcp-auth-proxy/pkg/proxy"
+	"github.com/sigbit/mcp-auth-proxy/pkg/ratelimit"
 	"github.com/sigbit/mcp-auth-proxy/pkg/repository"
+	"github.com/sigbit/mcp-auth-proxy/pkg/sanitize"
 	"github.com/sigbit/mcp-auth-proxy/pkg/tlsreload"
 	"github.com/sigbit/mcp-auth-proxy/pkg/utils"
 	"go.uber.org/zap"
@@ -283,10 +285,15 @@ func Run(
 		Path:     "/",
 		MaxAge:   600,
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 	router.Use(sessions.Sessions("session", store))
+	// Security: rate limit auth endpoints (per-IP, configurable via env vars)
+	rateLimiter := ratelimit.New(1 * time.Minute)
+	router.Use(ratelimit.Middleware(rateLimiter))
+	// Security: strip framework details (Pydantic, FastAPI) from error responses
+	router.Use(sanitize.Middleware())
 	authRouter.SetupRoutes(router)
 	idpRouter.SetupRoutes(router)
 	proxyRouter.SetupRoutes(router)
